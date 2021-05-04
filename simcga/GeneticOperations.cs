@@ -19,6 +19,7 @@ namespace simcga
         private readonly string _simcPath;
         private readonly string _baseSimcFile;
         private readonly string _apiKeyPath;
+        private readonly SimcRunner _simcRunner;
         private double _averageDamage;
         private int _maximumActionCount;
         private Dictionary<Apl, Dps> _results;
@@ -34,6 +35,7 @@ namespace simcga
             this._simcPath = simcPath;
             this._baseSimcFile = baseSimcFile;
             this._apiKeyPath = apiKeyPath;
+            this._simcRunner = new SimcRunner(baseSimcFile, simcPath, apiKeyPath);
         }
 
         public IList<Apl> CrossOver(IList<Apl> parents)
@@ -101,103 +103,44 @@ namespace simcga
             File.WriteAllLines($"best{_populationCount++}.simc", maxResult.Key.GetContent());
         }
 
-        public Dps Measure(in Apl singleItem)
+        private static IEnumerable<IList<TSource>> Batch<TSource>(
+                  IEnumerable<TSource> source, int size)
         {
-            var guid = Guid.NewGuid().ToString();
-            var jsonPath = Path.Combine(Path.GetTempPath(), guid + ".json");
-            var inputSimcPath = Path.Combine(Path.GetTempPath(), guid + ".simc");
-            Process proc;
-            try
-            {
-                File.Copy(_baseSimcFile, inputSimcPath);
-                File.AppendAllText(inputSimcPath, Environment.NewLine);
-                File.AppendAllLines(inputSimcPath, singleItem.GetContent());
-                var psiBase = new ProcessStartInfo();
-                psiBase.FileName = _simcPath;
-                psiBase.WorkingDirectory = _apiKeyPath;
-                psiBase.WindowStyle = ProcessWindowStyle.Hidden;
-                psiBase.CreateNoWindow = true;
-                psiBase.Arguments = $@"{inputSimcPath} json={jsonPath}";
-                proc = Process.Start(psiBase);
-                proc.PriorityClass = ProcessPriorityClass.Idle;
-                if (!proc.WaitForExit(10000))
-                {
-                    try
-                    {
-                        proc.Kill();
-                    }
-                    catch(InvalidOperationException)
-                    {
-                        if(!proc.HasExited)
-                        {
-                            throw;
-                        }
-                    }
-                    catch (Win32Exception ex)
-                    {
-                        if (ex.NativeErrorCode != 5)
-                        {
-                            throw;
-                        }
-                    }
-                }
+            TSource[] bucket = null;
+            var count = 0;
 
-                double dps = 0.0;
-                if (!File.Exists(jsonPath))
-                {
-                    dps = -1;
-                }
-                else
-                {
-                    var content = "";
-                    bool read = false;
-                    for (int i = 0; i < 5; ++i)
-                    {
-                        try
-                        {
-                            content = File.ReadAllText(jsonPath);
-                            read = true;
-                        }
-                        catch (IOException)
-                        {
-                            Thread.Yield();
-                            continue;
-                        }
-                    }
-                    if (!read)
-                    {
-                        throw new InvalidOperationException($"Unable to read file {jsonPath}");
-                    }
-                    var obj = JsonConvert.DeserializeObject(content) as JObject;
-                    var raid_dps = obj["sim"]["statistics"]["raid_dps"];
-                    if (raid_dps != null)
-                    {
-                        dps = raid_dps["mean"].Value<double>();
-                    }
-                }
-                return new Dps
-                {
-                    Damage = dps
-                };
-            }
-            catch
+            foreach (var item in source)
             {
-                return new Dps
-                {
-                    Damage = -1
-                };
+                if (bucket == null)
+                    bucket = new TSource[size];
+
+                bucket[count++] = item;
+                if (count != size)
+                    continue;
+
+                yield return bucket;
+
+                bucket = null;
+                count = 0;
             }
-            finally
+
+            if (bucket != null && count > 0)
+                yield return bucket.Take(count).ToArray();
+        }
+
+        public IDictionary<Apl, Dps> Measure(in IList<Apl> items)
+        {
+            IDictionary<Apl, Dps> ret = new Dictionary<Apl, Dps>();
+            foreach (var batch in Batch(items, 10))
             {
-                if (File.Exists(jsonPath))
+                var batchRet = _simcRunner.MeasureCore(batch);
+                foreach(var t in batchRet)
                 {
-                    File.Delete(jsonPath);
-                }
-                if (File.Exists(inputSimcPath))
-                {
-                    File.Delete(inputSimcPath);
+                    ret.Add(t.Key, t.Value);
                 }
             }
+
+            return ret;
         }
 
         public Apl Mutate(Apl item)
@@ -211,11 +154,40 @@ namespace simcga
                 }
                 else
                 {
-                    newItem.Actions.Add(new AplAction { ActionName = act.ActionName, Options = "!" + act.Options });
+                    if (act.Options.StartsWith("!"))
+                    {
+                        act.Options = act.Options.Substring(1);
+                    }
+                    else
+                    {
+                        newItem.Actions.Add(new AplAction { ActionName = act.ActionName, Options = "!" + act.Options });
+                    }
                 }
             }
 
             return newItem;
+        }
+
+        public IList<Apl> CreateInitialPopulation(int count)
+        {
+            SimcParser.ParseActionsAndOptions(_baseSimcFile, out List<string> actions, out List<string> conditions);
+            List<Apl> initialApl = new List<Apl>();
+            while (initialApl.Count < count)
+            {
+                var apl = new Apl();
+                for (int i = 0; i < 30; ++i)
+                {
+                    var action = new AplAction();
+                    action.ActionName = actions[rnd.Next(0, actions.Count)];
+                    var optionsIndex = rnd.Next(-1, conditions.Count);
+                    action.Options = optionsIndex == -1 ? "" : conditions[optionsIndex];
+                    apl.Actions.Add(action);
+                }
+
+                initialApl.Add(apl);
+            }
+
+            return initialApl;
         }
     }
 }

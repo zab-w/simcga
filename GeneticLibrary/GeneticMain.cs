@@ -12,11 +12,14 @@ namespace GeneticLibrary
 {
     public interface IGeneticOperations<IndividualType, MeasureType>
     {
-        MeasureType Measure(in IndividualType singleItem);
+        IList<IndividualType> CreateInitialPopulation(int count);
+
+        IDictionary<IndividualType, MeasureType> Measure(in IList<IndividualType> items);
 
         IList<IndividualType> CrossOver(IList<IndividualType> parents);
 
         IndividualType Mutate(IndividualType item);
+
         bool Fitness(IList<IndividualType> population, IDictionary<IndividualType, MeasureType> results, IList<bool> toDelete);
 
         void History(IList<IndividualType> population, IDictionary<IndividualType, MeasureType> results);
@@ -24,7 +27,7 @@ namespace GeneticLibrary
 
     public class GeneticMain<IndividualType, MeasureType>
     {
-        readonly List<IndividualType> initialPopulation = new List<IndividualType>();
+        readonly IList<IndividualType> initialPopulation = new List<IndividualType>();
         readonly ConcurrentDictionary<IndividualType, MeasureType> results = new ConcurrentDictionary<IndividualType, MeasureType>();
         readonly IEqualityComparer<IndividualType> equalityComparer;
         private readonly IGeneticOperations<IndividualType, MeasureType> geneticOperations;
@@ -34,13 +37,12 @@ namespace GeneticLibrary
 
         public GeneticMain(IGeneticOperations<IndividualType, MeasureType> geneticOperations
             , IEqualityComparer<IndividualType> equalityComparer
-            , List<IndividualType> initialPopulate
             , IGeneticOptions options)
         {
             this.geneticOperations = geneticOperations;
             this.options = options;
             this.equalityComparer = equalityComparer;
-            this.initialPopulation.AddRange(initialPopulate);
+            this.initialPopulation = geneticOperations.CreateInitialPopulation(300);
 
             if (!typeof(IndividualType).IsValueType && equalityComparer == null)
             {
@@ -57,14 +59,14 @@ namespace GeneticLibrary
             }
         }
 
-        private List<IndividualType> RemoveDuplicates(List<IndividualType> populate, IGeneticCallback<IndividualType, MeasureType> callback)
+        private List<IndividualType> RemoveDuplicates(IList<IndividualType> populate, IGeneticCallback<IndividualType, MeasureType> callback)
         {
             var uniques = populate.Select(x => x).Distinct(equalityComparer).ToList();
             callback?.OnRemoveDuplicate(populate.Count, uniques.Count);
             return uniques;
         }
 
-        List<IndividualType> CreateNewPopulate(List<IndividualType> parentPopulate, IGeneticCallback<IndividualType, MeasureType> callback)
+        List<IndividualType> CreateNewPopulate(IList<IndividualType> parentPopulate, IGeneticCallback<IndividualType, MeasureType> callback)
         {
             if (parentPopulate.Count == 0)
             {
@@ -125,16 +127,19 @@ namespace GeneticLibrary
             do
             {
                 populate = CreateNewPopulate(populate, callback);
+                foreach (var n in geneticOperations.CreateInitialPopulation((int)(populate.Count * 0.1)))
+                {
+                    populate.Add(n);
+                }
+
                 populate = RemoveDuplicates(populate, callback);
 
                 var toMeasure = populate.Where(x => !results.ContainsKey(x)).ToList();
 
-                foreach (var individual in toMeasure)
+                var measured = geneticOperations.Measure(toMeasure);
+                foreach (var individual in measured)
                 {
-                    callback?.OnMeasuring(individual);
-                    Stopwatch sw = Stopwatch.StartNew();
-                    results.TryAdd(individual, geneticOperations.Measure(individual));
-                    callback?.OnMeasured(individual, sw.Elapsed);
+                    results.TryAdd(individual.Key, individual.Value);
                 }
 
                 geneticOperations.History(populate, results);
@@ -143,7 +148,7 @@ namespace GeneticLibrary
                 List<bool> toDelete = new List<bool>();
                 callback?.OnFitness();
                 bool contGenerate = geneticOperations.Fitness(populate, results, toDelete);
-                List<IndividualType> toDeleteRefs = GetIndividualsToDelete(populate, toDelete);
+                IList<IndividualType> toDeleteRefs = GetIndividualsToDelete(populate, toDelete);
 
                 if (populate.Count - toDeleteRefs.Count <= options.MinPersonToStop || !contGenerate)
                 {
@@ -160,7 +165,7 @@ namespace GeneticLibrary
             return results;
         }
 
-        private static void DeleteIndividuals(List<IndividualType> populate, List<IndividualType> toDeleteRefs)
+        private static void DeleteIndividuals(IList<IndividualType> populate, IList<IndividualType> toDeleteRefs)
         {
             foreach (IndividualType item in toDeleteRefs)
             {
@@ -168,7 +173,7 @@ namespace GeneticLibrary
             }
         }
 
-        private static List<IndividualType> GetIndividualsToDelete(List<IndividualType> populate, List<bool> toDelete)
+        private static IList<IndividualType> GetIndividualsToDelete(IList<IndividualType> populate, List<bool> toDelete)
         {
             List<IndividualType> toDeleteRefs = new List<IndividualType>();
             if (toDelete.Count != 0)
