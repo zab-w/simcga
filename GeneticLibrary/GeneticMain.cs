@@ -42,7 +42,7 @@ namespace GeneticLibrary
             this.geneticOperations = geneticOperations;
             this.options = options;
             this.equalityComparer = equalityComparer;
-            this.initialPopulation = geneticOperations.CreateInitialPopulation(300);
+            this.initialPopulation = geneticOperations.CreateInitialPopulation(20);
 
             if (!typeof(IndividualType).IsValueType && equalityComparer == null)
             {

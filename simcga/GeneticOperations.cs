@@ -16,12 +16,8 @@ namespace simcga
 {
     class GeneticOperations : IGeneticOperations<Apl, Dps>
     {
-        private readonly string _simcPath;
         private readonly string _baseSimcFile;
-        private readonly string _apiKeyPath;
         private readonly SimcRunner _simcRunner;
-        private double _averageDamage;
-        private int _maximumActionCount;
         private Dictionary<Apl, Dps> _results;
         private double _maxDamage;
         readonly Random rnd = StaticRandom.Random;
@@ -32,9 +28,7 @@ namespace simcga
             , string apiKeyPath
             )
         {
-            this._simcPath = simcPath;
             this._baseSimcFile = baseSimcFile;
-            this._apiKeyPath = apiKeyPath;
             this._simcRunner = new SimcRunner(baseSimcFile, simcPath, apiKeyPath);
         }
 
@@ -78,8 +72,7 @@ namespace simcga
                         toDelete.Add(true);
                     }
                 }
-                // 64 is a max for sequence. If it's less than average - it's totally useless.
-                else if (population[i].Actions.Count >= _maximumActionCount && results[population[i]].Damage < _maxDamage * 0.75)
+                else if (results[population[i]].Damage < _maxDamage * 0.75)
                 {
                     toDelete.Add(true);
                 }
@@ -94,13 +87,11 @@ namespace simcga
 
         public void History(IList<Apl> population, IDictionary<Apl, Dps> results)
         {
-            _maximumActionCount = results.Select(x => x.Key.Actions.Count).Max();
-            _averageDamage = results.Where(x => x.Key.Actions.Count == _maximumActionCount).Select(x => x.Value.Damage).Average();
             _results = results.ToDictionary(x => x.Key, x => x.Value);
-            _maxDamage = results.Where(x => x.Key.ToString() != string.Empty).Select(x => x.Value.Damage).Max();
-            File.WriteAllText("results.json", JsonConvert.SerializeObject(_results.OrderByDescending(x => x.Value.Damage)));
+            _maxDamage = results.Select(x => x.Value.Damage).Max();
+            File.WriteAllText("results.json", JsonConvert.SerializeObject(_results.OrderByDescending(x => x.Value.Damage).Take(10)));
             var maxResult = results.OrderByDescending(x => x.Value.Damage).First();
-            File.WriteAllLines($"best{_populationCount++}.simc", maxResult.Key.GetContent());
+            File.WriteAllLines($"best{_populationCount++}_{(int)maxResult.Value.Damage}.simc", maxResult.Key.GetContent());
         }
 
         private static IEnumerable<IList<TSource>> Batch<TSource>(

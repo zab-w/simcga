@@ -29,8 +29,7 @@ namespace simcga
                 );
             IGeneticCallback<Apl, Dps> geneticCallback = new GeneticCallback();
             var results = geneticMain.Run(geneticCallback);
-            File.WriteAllText("results.json", JsonConvert.SerializeObject(results));
+            File.WriteAllText("results.json", JsonConvert.SerializeObject(results.Take(10)));
         }
-
     }
 }
