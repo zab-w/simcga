@@ -15,10 +15,10 @@ namespace simcga
         static void Main(string[] args)
         {
             AplEqualityComparer comparer = new AplEqualityComparer();
-            string simcPath = @"D:\Workshop\simc\bin\x64\Release\simc.exe";
-            string baseSimcPath = @"d:\Workshop\AutoSimC\input.txt";
-            
-            string apiKeyPath = @"d:\Workshop\simc\vs\";
+            string simcPath = args[0];
+            string baseSimcPath = args[1];//@"d:\Workshop\AutoSimC\input.txt";
+
+            string apiKeyPath = args[2];//@"d:\Workshop\simc\vs\";
             GeneticOperations geneticOperations = new simcga.GeneticOperations(simcPath, baseSimcPath, apiKeyPath);
             BaseGeneticOptions options = new BaseGeneticOptions();
             options.DescendantChance = 33;

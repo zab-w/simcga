@@ -18,7 +18,6 @@ namespace simcga
     {
         private readonly string _baseSimcFile;
         private readonly SimcRunner _simcRunner;
-        private Dictionary<Apl, Dps> _results;
         private double _maxDamage;
         readonly Random rnd = StaticRandom.Random;
         private int _populationCount;
@@ -42,9 +41,13 @@ namespace simcga
                 for (int j = 0; j < max; ++j)
                 {
                     var act = new AplAction();
+                    var parentIndex1 = rnd.Next(parents.Count);
+                    var parentIndex2 = rnd.Next(parents.Count);
+                    var parent1 = parents[parentIndex1];
+                    var parent2 = parents[parentIndex2];
 
-                    act.ActionName = parents[rnd.Next(parents.Count)].Actions[j].ActionName;
-                    act.Options = parents[rnd.Next(parents.Count)].Actions[j].Options;
+                    act.ActionName = parent1.Actions[Math.Min(j, parent1.Actions.Count - 1)].ActionName;
+                    act.Options = parent2.Actions[Math.Min(j, parent2.Actions.Count - 1)].Options;
                     ret[i].Actions.Add(act);
                 }
             }
@@ -87,9 +90,8 @@ namespace simcga
 
         public void History(IList<Apl> population, IDictionary<Apl, Dps> results)
         {
-            _results = results.ToDictionary(x => x.Key, x => x.Value);
             _maxDamage = results.Select(x => x.Value.Damage).Max();
-            File.WriteAllText("results.json", JsonConvert.SerializeObject(_results.OrderByDescending(x => x.Value.Damage).Take(10)));
+            File.WriteAllText("results.json", JsonConvert.SerializeObject(results.OrderByDescending(x => x.Value.Damage).Take(10)));
             var maxResult = results.OrderByDescending(x => x.Value.Damage).First();
             File.WriteAllLines($"best{_populationCount++}_{(int)maxResult.Value.Damage}.simc", maxResult.Key.GetContent());
         }

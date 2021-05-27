@@ -28,7 +28,7 @@ namespace GeneticLibrary
     public class GeneticMain<IndividualType, MeasureType>
     {
         readonly IList<IndividualType> initialPopulation = new List<IndividualType>();
-        readonly ConcurrentDictionary<IndividualType, MeasureType> results = new ConcurrentDictionary<IndividualType, MeasureType>();
+        readonly Dictionary<IndividualType, MeasureType> results = new Dictionary<IndividualType, MeasureType>();
         readonly IEqualityComparer<IndividualType> equalityComparer;
         private readonly IGeneticOperations<IndividualType, MeasureType> geneticOperations;
         readonly IGeneticOptions options;
@@ -42,7 +42,7 @@ namespace GeneticLibrary
             this.geneticOperations = geneticOperations;
             this.options = options;
             this.equalityComparer = equalityComparer;
-            this.initialPopulation = geneticOperations.CreateInitialPopulation(20);
+            this.initialPopulation = geneticOperations.CreateInitialPopulation(100);
 
             if (!typeof(IndividualType).IsValueType && equalityComparer == null)
             {
@@ -51,11 +51,11 @@ namespace GeneticLibrary
 
             if (equalityComparer != null)
             {
-                results = new ConcurrentDictionary<IndividualType, MeasureType>(equalityComparer);
+                results = new Dictionary<IndividualType, MeasureType>(equalityComparer);
             }
             else
             {
-                results = new ConcurrentDictionary<IndividualType, MeasureType>();
+                results = new Dictionary<IndividualType, MeasureType>();
             }
         }
 
@@ -139,7 +139,7 @@ namespace GeneticLibrary
                 var measured = geneticOperations.Measure(toMeasure);
                 foreach (var individual in measured)
                 {
-                    results.TryAdd(individual.Key, individual.Value);
+                    results.Add(individual.Key, individual.Value);
                 }
 
                 geneticOperations.History(populate, results);
