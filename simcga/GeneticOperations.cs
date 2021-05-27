@@ -1,6 +1,7 @@
 ﻿using GeneticLibrary;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using simcga.Options;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -141,20 +142,13 @@ namespace simcga
             var newItem = new Apl();
             foreach (var act in item.Actions)
             {
-                if (StaticRandom.Random.Next(0, 3) != 0 || string.IsNullOrEmpty(act.Options))
+                if (StaticRandom.Random.Next(0, 3) != 0 || act.Options is EmptyOption)
                 {
                     newItem.Actions.Add(act);
                 }
                 else
                 {
-                    if (act.Options.StartsWith("!"))
-                    {
-                        act.Options = act.Options.Substring(1);
-                    }
-                    else
-                    {
-                        newItem.Actions.Add(new AplAction { ActionName = act.ActionName, Options = "!" + act.Options });
-                    }
+                    newItem.Actions.Add(new AplAction { ActionName = act.ActionName, Options = act.Options.Mutate() });
                 }
             }
 
@@ -163,7 +157,7 @@ namespace simcga
 
         public IList<Apl> CreateInitialPopulation(int count)
         {
-            SimcParser.ParseActionsAndOptions(_baseSimcFile, out List<string> actions, out List<string> conditions);
+            SimcParser.ParseActionsAndOptions(_baseSimcFile, out List<string> actions, out List<IOption> options);
             List<Apl> initialApl = new List<Apl>();
             while (initialApl.Count < count)
             {
@@ -172,8 +166,8 @@ namespace simcga
                 {
                     var action = new AplAction();
                     action.ActionName = actions[rnd.Next(0, actions.Count)];
-                    var optionsIndex = rnd.Next(-1, conditions.Count);
-                    action.Options = optionsIndex == -1 ? "" : conditions[optionsIndex];
+                    var optionsIndex = rnd.Next(-1, options.Count);
+                    action.Options = optionsIndex == -1 ? EmptyOption.Option : options[optionsIndex];
                     apl.Actions.Add(action);
                 }
 

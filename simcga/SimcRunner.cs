@@ -62,8 +62,10 @@ namespace simcga
                 yield return bucket.Take(count).ToArray();
         }
 
-        public IDictionary<Apl, Dps> MeasureCore(in IList<Apl> items)
+        public IDictionary<Apl, Dps> MeasureCore(in IList<Apl> itemsIn)
         {
+            var items = Sanitize(itemsIn).ToList();
+
             var guid = Guid.NewGuid().ToString();
             var jsonPath = Path.Combine(Path.GetTempPath(), guid + ".json");
             var inputSimcPath = Path.Combine(Path.GetTempPath(), guid + ".simc");
@@ -132,6 +134,60 @@ namespace simcga
                 if (File.Exists(inputSimcPath))
                 {
                     File.Delete(inputSimcPath);
+                }
+            }
+        }
+
+        private IEnumerable<Apl> Sanitize(IList<Apl> itemsIn)
+        {
+            foreach (var singleItem in itemsIn)
+            {
+                var guid = Guid.NewGuid().ToString();
+                var jsonPath = Path.Combine(Path.GetTempPath(), guid + ".json");
+                var inputSimcPath = Path.Combine(Path.GetTempPath(), guid + ".simc");
+                var baseContent = File.ReadAllText(_baseSimcFile);
+
+                try
+                {
+                    StringBuilder sb = new StringBuilder(baseContent);
+                    sb.AppendLine();
+                    sb.Append(string.Join(Environment.NewLine, singleItem.GetContent()));
+                    sb.AppendLine();
+                    sb.AppendLine();
+                    sb.AppendLine();
+                    File.AppendAllText(inputSimcPath, sb.ToString());
+
+                    IDictionary<Apl, Dps> ret = new Dictionary<Apl, Dps>();
+                    Process proc;
+
+                    var psiBase = new ProcessStartInfo();
+                    psiBase.FileName = _simcPath;
+                    psiBase.WorkingDirectory = _apiKeyPath;
+                    psiBase.WindowStyle = ProcessWindowStyle.Hidden;
+                    psiBase.CreateNoWindow = true;
+                    psiBase.Arguments = $@"{inputSimcPath} strict_parsing=1 save_profiles=1";
+                    proc = Process.Start(psiBase);
+                    proc.PriorityClass = ProcessPriorityClass.Idle;
+                    proc.WaitForExit();
+                    if (proc.ExitCode == 0)
+                    {
+                        yield return singleItem;
+                    }
+                    else
+                    {
+                        File.Copy(inputSimcPath, Path.Combine($"malformed_{guid}.simc"));
+                    }
+                }
+                finally
+                {
+                    if (File.Exists(jsonPath))
+                    {
+                        File.Delete(jsonPath);
+                    }
+                    if (File.Exists(inputSimcPath))
+                    {
+                        File.Delete(inputSimcPath);
+                    }
                 }
             }
         }

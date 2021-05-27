@@ -1,4 +1,5 @@
-﻿using System;
+﻿using simcga.Options;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -8,7 +9,7 @@ namespace simcga
     {
         public string ActionName { get; set; }
 
-        public string Options { get; set; }
+        public IOption Options { get; set; }
 
         public AplAction Clone()
         {
@@ -111,7 +112,7 @@ namespace simcga
 
             foreach(var act in Actions)
             {
-                var temp = !string.IsNullOrEmpty(act.Options) ? string.Join(",", act.ActionName, $"if={act.Options}") : act.ActionName;
+                var temp = !(act.Options is EmptyOption) ? string.Join(",", act.ActionName, $"if={act.Options}") : act.ActionName;
                 if (first)
                 {
                     yield return "actions=" + temp;

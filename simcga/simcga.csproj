@@ -51,13 +51,20 @@
   <ItemGroup>
     <Compile Include="Apl.cs" />
     <Compile Include="AplEqualityComparer.cs" />
+    <Compile Include="Options\BaseOption.cs" />
+    <Compile Include="Options\BuffOption.cs" />
     <Compile Include="Dps.cs" />
     <Compile Include="GeneticCallback.cs" />
     <Compile Include="GeneticOperations.cs" />
+    <Compile Include="Options\EmptyOption.cs" />
+    <Compile Include="Options\IOption.cs" />
+    <Compile Include="Options\PetOption.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ResourceOption.cs" />
     <Compile Include="SimcParser.cs" />
     <Compile Include="SimcRunner.cs" />
+    <Compile Include="Options\StackBuffOption.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

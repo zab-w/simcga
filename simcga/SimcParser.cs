@@ -6,7 +6,7 @@ namespace simcga
 {
     public static class SimcParser
     {
-        public static void ParseActionsAndOptions(string baseSimcPath, out List<string> actions, out List<string> conditions)
+        public static void ParseActionsAndOptions(string baseSimcPath, out List<string> actions, out List<IOption> options)
         {
             var simc = File.ReadAllLines(baseSimcPath).Where(x => !x.StartsWith("#") && !string.IsNullOrEmpty(x.Trim())).ToArray();
             var values = simc.Select(x => x.Split('=')).ToDictionary(x => x[0], x => x[1]);
@@ -46,12 +46,12 @@ namespace simcga
 
             actions.AddRange(activeTalents.Where(x => !string.IsNullOrEmpty(x)).ToList());
 
-            conditions = new List<string>();
+            options = new List<IOption>();
             switch (talents[0])
             {
                 case '1':
                     {
-                        conditions.Add("buff.earthen_rage.up");
+                        options.Add(new BuffOption("earthen_rage"));
                     }
                     break;
                 case '2':
@@ -65,7 +65,7 @@ namespace simcga
                     break;
                 case '2':
                     {
-                        conditions.Add("buff.echoing_shock.up");
+                        options.Add(new BuffOption("echoing_shock"));
                     }
                     break;
                 case '3':
@@ -75,14 +75,14 @@ namespace simcga
             {
                 case '1':
                     {
-                        conditions.Add("buff.master_of_the_elements.up");
+                        options.Add(new BuffOption("master_of_the_elements"));
                     }
                     break;
                 case '2':
                     {
-                        conditions.Add("pet.storm_elemental.active");
-                        conditions.AddRange(Enumerable.Range(0, 21).Select(x => "buff.wind_gust.stack>" + x));
-                        conditions.AddRange(Enumerable.Range(0, 21).Select(x => "buff.wind_gust.stack<" + x));
+                        options.Add(new PetOption("pet.storm_elemental.active"));
+                        options.AddRange(Enumerable.Range(0, 21).Select(x => new StackBuffOption("wind_gust", 1, x)).OfType<IOption>());
+                        options.AddRange(Enumerable.Range(0, 21).Select(x => new StackBuffOption("wind_gust", -1, x)).OfType<IOption>());
                     }
                     break;
                 case '3':
@@ -92,15 +92,15 @@ namespace simcga
             {
                 case '1':
                     {
-                        conditions.Add("buff.surge_of_power.up");
+                        options.Add(new BuffOption("surge_of_power"));
                     }
                     break;
                 case '2':
                     break;
                 case '3':
                     {
-                        conditions.AddRange(Enumerable.Range(0, 4).Select(x => "buff.icefury.stack>" + x));
-                        conditions.AddRange(Enumerable.Range(0, 4).Select(x => "buff.icefury.stack<" + x));
+                        options.AddRange(Enumerable.Range(0, 3).Select(x => new StackBuffOption("icefury", 1, x)).OfType<IOption>());
+                        options.AddRange(Enumerable.Range(1, 5).Select(x => new StackBuffOption("icefury", -1, x)).OfType<IOption>());
                     }
                     break;
             }
@@ -110,20 +110,19 @@ namespace simcga
                     break;
                 case '2':
                     {
-                        conditions.AddRange(Enumerable.Range(0, 2).Select(x => "buff.stormkeeper.stack>" + x));
-                        conditions.AddRange(Enumerable.Range(0, 2).Select(x => "buff.stormkeeper.stack<" + x));
+                        options.AddRange(Enumerable.Range(0,2).Select(x => new StackBuffOption("stormkeeper", 1, x)).OfType<IOption>());
+                        options.AddRange(Enumerable.Range(1,4).Select(x => new StackBuffOption("stormkeeper", -1, x)).OfType<IOption>());
                     }
                     break;
                 case '3':
                     {
-                        conditions.Add("buff.ascendance.up");
+                        options.Add(new BuffOption("ascendance"));
                     }
                     break;
             }
 
-            conditions.AddRange(Enumerable.Range(1, 10).Select(x => "maelstrom<" + x + "0"));
-            conditions.AddRange(Enumerable.Range(1, 10).Select(x => "maelstrom>=" + x + "0"));
+            options.AddRange(Enumerable.Range(1, 10).Select(x => new ResourceOption("maelstrom", 1, x * 10)).OfType<IOption>());
+            options.AddRange(Enumerable.Range(1, 10).Select(x => new ResourceOption("maelstrom", -1, x * 10)).OfType<IOption>());
         }
-
     }
 }
