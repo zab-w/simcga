@@ -10,7 +10,6 @@ namespace GeneticLibrary
         int DescendantChance { get; }
         int MutateChance { get; }
         int ParentCountForNew { get; }
-        int UniqueParentCount { get; }
         int MaxPopulateCount { get; }
         int MinPopulateCount { get; }
         int MinPersonToStop { get; }
