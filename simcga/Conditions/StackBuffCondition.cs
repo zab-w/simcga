@@ -4,13 +4,13 @@ using UtilsLib;
 
 namespace simcga
 {
-    public class StackBuffOption : BaseOption, IEquatable<StackBuffOption>
+    public class StackBuffCondition : BaseCondition, IEquatable<StackBuffCondition>
     {
         private readonly string _buffName;
         private readonly int _moreEqualLess;
         private readonly int _stacks;
 
-        public StackBuffOption(string buffName, int moreEqualLess, int stacks)
+        public StackBuffCondition(string buffName, int moreEqualLess, int stacks)
         {
             this._buffName = buffName;
             this._moreEqualLess = moreEqualLess;
@@ -19,10 +19,10 @@ namespace simcga
 
         public override bool Equals(object obj)
         {
-            return this.Equals(obj as StackBuffOption);
+            return this.Equals(obj as StackBuffCondition);
         }
 
-        public bool Equals(StackBuffOption other)
+        public bool Equals(StackBuffCondition other)
         {
             return other != null &&
                    base.Equals(other) &&
@@ -51,7 +51,7 @@ namespace simcga
             return $"{_negate}buff.{_buffName}.stack{compare}{_stacks}";
         }
 
-        protected override BaseOption MutateImpl()
+        protected override BaseCondition MutateImpl()
         {
             var stacks = _stacks;
             int moreEqualLess = _moreEqualLess;
@@ -73,15 +73,15 @@ namespace simcga
                 moreEqualLess = StaticRandom.Random.Next(3) - 1;
             }
 
-            return new StackBuffOption(_buffName, moreEqualLess, stacks);
+            return new StackBuffCondition(_buffName, moreEqualLess, stacks);
         }
 
-        public static bool operator ==(StackBuffOption left, StackBuffOption right)
+        public static bool operator ==(StackBuffCondition left, StackBuffCondition right)
         {
-            return EqualityComparer<StackBuffOption>.Default.Equals(left, right);
+            return EqualityComparer<StackBuffCondition>.Default.Equals(left, right);
         }
 
-        public static bool operator !=(StackBuffOption left, StackBuffOption right)
+        public static bool operator !=(StackBuffCondition left, StackBuffCondition right)
         {
             return !(left == right);
         }

@@ -3,12 +3,12 @@ using System.Collections.Generic;
 
 namespace simcga
 {
-    public class PetOption : BaseOption, IEquatable<PetOption>
+    public class PetCondition : BaseCondition, IEquatable<PetCondition>
     {
         private readonly string _petName;
         private readonly string _state;
 
-        public PetOption(string petName, string state = "active")
+        public PetCondition(string petName, string state = "active")
         {
             this._petName = petName;
             this._state = state;
@@ -16,10 +16,10 @@ namespace simcga
 
         public override bool Equals(object obj)
         {
-            return this.Equals(obj as PetOption);
+            return this.Equals(obj as PetCondition);
         }
 
-        public bool Equals(PetOption other)
+        public bool Equals(PetCondition other)
         {
             return other != null &&
                    base.Equals(other) &&
@@ -37,17 +37,17 @@ namespace simcga
             return $"{_negate}pet.{_petName}.{_state}";
         }
 
-        protected override BaseOption MutateImpl()
+        protected override BaseCondition MutateImpl()
         {
-            return new PetOption(_petName);
+            return new PetCondition(_petName);
         }
 
-        public static bool operator ==(PetOption left, PetOption right)
+        public static bool operator ==(PetCondition left, PetCondition right)
         {
-            return EqualityComparer<PetOption>.Default.Equals(left, right);
+            return EqualityComparer<PetCondition>.Default.Equals(left, right);
         }
 
-        public static bool operator !=(PetOption left, PetOption right)
+        public static bool operator !=(PetCondition left, PetCondition right)
         {
             return !(left == right);
         }

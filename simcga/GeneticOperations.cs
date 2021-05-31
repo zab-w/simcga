@@ -1,6 +1,7 @@
 ﻿using GeneticLibrary;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using simcga.Actions;
 using simcga.Options;
 using System;
 using System.Collections.Generic;
@@ -124,6 +125,7 @@ namespace simcga
 
         public IDictionary<Apl, Dps> Measure(in IList<Apl> items)
         {
+            var max = 0.0;
             IDictionary<Apl, Dps> ret = new Dictionary<Apl, Dps>();
             foreach (var batch in Batch(items, 10))
             {
@@ -131,18 +133,41 @@ namespace simcga
                 foreach(var t in batchRet)
                 {
                     ret.Add(t.Key, t.Value);
+                    if(t.Value.Damage > max)
+                    {
+                        File.WriteAllLines($"bestcurrent_{(int)t.Value.Damage}.simc", t.Key.GetContent());
+                        max = t.Value.Damage;
+                    }
                 }
             }
 
             return ret;
         }
 
-        public Apl Mutate(Apl item)
+        public IList<Apl> Mutate(Apl item)
         {
+            SimcParser.ParseActionsAndOptions(_baseSimcFile, out List<IAction> actions, out List<ICondition> options);
+
+            Apl[] ret = new Apl[actions.Count];
+            for (int i = 0; i < ret.Length; ++i)
+            {
+                var replace = item.Clone();
+                var actionToReplace = StaticRandom.Random.Next(0, replace.Actions.Count);
+                var action = actions[i];
+                var option = GenerateRandomCondition(options);
+                replace.Actions[actionToReplace] = new AplAction
+                {
+                    ActionName = action,
+                    Options = option
+                };
+
+                ret[i] = replace;
+            }
+
             var newItem = new Apl();
             foreach (var act in item.Actions)
             {
-                if (StaticRandom.Random.Next(0, 3) != 0 || act.Options is EmptyOption)
+                if (StaticRandom.Random.Next(0, 3) != 0 || act.Options is EmptyCondition)
                 {
                     newItem.Actions.Add(act);
                 }
@@ -152,22 +177,19 @@ namespace simcga
                 }
             }
 
-            return newItem;
+            return ret.Concat(new[] { newItem }).ToArray();
         }
 
         public IList<Apl> CreateInitialPopulation(int count)
         {
-            SimcParser.ParseActionsAndOptions(_baseSimcFile, out List<string> actions, out List<IOption> options);
+            SimcParser.ParseActionsAndOptions(_baseSimcFile, out List<IAction> actions, out List<ICondition> options);
             List<Apl> initialApl = new List<Apl>();
             while (initialApl.Count < count)
             {
                 var apl = new Apl();
-                for (int i = 0; i < 30; ++i)
+                for (int i = 0; i < 20; ++i)
                 {
-                    var action = new AplAction();
-                    action.ActionName = actions[rnd.Next(0, actions.Count)];
-                    var optionsIndex = rnd.Next(-1, options.Count);
-                    action.Options = optionsIndex == -1 ? EmptyOption.Option : options[optionsIndex];
+                    AplAction action = GenerateRandomAction(actions, options);
                     apl.Actions.Add(action);
                 }
 
@@ -175,6 +197,22 @@ namespace simcga
             }
 
             return initialApl;
+        }
+
+        private AplAction GenerateRandomAction(List<IAction> actions, List<ICondition> options)
+        {
+            var action = new AplAction();
+            action.ActionName = actions[rnd.Next(0, actions.Count)];
+            ICondition option = GenerateRandomCondition(options);
+            action.Options = option;
+            return action;
+        }
+
+        private ICondition GenerateRandomCondition(List<ICondition> options)
+        {
+            var optionsIndex = rnd.Next(-1, options.Count);
+            var option = optionsIndex == -1 ? EmptyCondition.Condition : options[optionsIndex];
+            return option;
         }
     }
 }

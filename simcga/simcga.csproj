@@ -49,22 +49,26 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Actions\DotAction.cs" />
+    <Compile Include="Actions\EmptyAction.cs" />
+    <Compile Include="Actions\IAction.cs" />
+    <Compile Include="Actions\SimpleAction.cs" />
     <Compile Include="Apl.cs" />
     <Compile Include="AplEqualityComparer.cs" />
-    <Compile Include="Options\BaseOption.cs" />
-    <Compile Include="Options\BuffOption.cs" />
+    <Compile Include="Conditions\BaseCondition.cs" />
+    <Compile Include="Conditions\BuffCondition.cs" />
     <Compile Include="Dps.cs" />
     <Compile Include="GeneticCallback.cs" />
     <Compile Include="GeneticOperations.cs" />
-    <Compile Include="Options\EmptyOption.cs" />
-    <Compile Include="Options\IOption.cs" />
-    <Compile Include="Options\PetOption.cs" />
+    <Compile Include="Conditions\EmptyCondition.cs" />
+    <Compile Include="Conditions\ICondition.cs" />
+    <Compile Include="Conditions\PetCondition.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ResourceOption.cs" />
     <Compile Include="SimcParser.cs" />
     <Compile Include="SimcRunner.cs" />
-    <Compile Include="Options\StackBuffOption.cs" />
+    <Compile Include="Conditions\StackBuffCondition.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -80,5 +84,6 @@
       <Name>UtilsLib</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using simcga.Actions;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -6,7 +7,7 @@ namespace simcga
 {
     public static class SimcParser
     {
-        public static void ParseActionsAndOptions(string baseSimcPath, out List<string> actions, out List<IOption> options)
+        public static void ParseActionsAndOptions(string baseSimcPath, out List<IAction> actions, out List<ICondition> conditions)
         {
             var simc = File.ReadAllLines(baseSimcPath).Where(x => !x.StartsWith("#") && !string.IsNullOrEmpty(x.Trim())).ToArray();
             var values = simc.Select(x => x.Split('=')).ToDictionary(x => x[0], x => x[1]);
@@ -15,43 +16,43 @@ namespace simcga
 
             actions = new[]
             {
-                "flame_shock",
-                "frost_shock",
-                "lightning_bolt",
-                "chain_lightning",
-                covenant == "necrolord" ? "primordial_wave" : "",
-                covenant == "nightfae" ? "fae_transfusion" : "",
-                covenant == "venthyr" ? "chain_harvest" : "",
-                covenant == "kyrian" ? "vesper_totem" : "",
-                "earth_elemental",
-                "earth_shock",
-                "earthquake",
-                "fire_elemental",
-                "lava_burst",
-            }.Where(x => !string.IsNullOrEmpty(x)).ToList();
+                new DotAction("flame_shock"),
+                new SimpleAction("frost_shock"),
+                new SimpleAction("lightning_bolt"),
+                new SimpleAction("chain_lightning"),
+                covenant == "necrolord" ? new SimpleAction("primordial_wave") : EmptyAction.Action,
+                covenant == "nightfae" ? new SimpleAction("fae_transfusion") : EmptyAction.Action,
+                covenant == "venthyr" ? new SimpleAction("chain_harvest") : EmptyAction.Action,
+                covenant == "kyrian" ? new SimpleAction("vesper_totem") : EmptyAction.Action,
+                new SimpleAction("earth_elemental"),
+                new SimpleAction("earth_shock"),
+                new SimpleAction("earthquake"),
+                new SimpleAction("fire_elemental"),
+                new SimpleAction("lava_burst"),
+            }.Where(x => !(x is EmptyAction) ).ToList();
 
-            string[] activeTalents =
+            IAction[] activeTalents =
             {
-                talents[1] == '2' ? "echoing_shock" : "",
-                talents[1] == '3' ? "elemental_blast" : "",
+                talents[1] == '2' ? new SimpleAction("echoing_shock") : EmptyAction.Action,
+                talents[1] == '3' ? new SimpleAction("elemental_blast") : EmptyAction.Action,
 
-                talents[3] == '2' ? "storm_elemental" : "",
-                talents[3] == '3' ? "liquid_magma_totem" : "",
+                talents[3] == '2' ? new SimpleAction("storm_elemental") : EmptyAction.Action,
+                talents[3] == '3' ? new SimpleAction("liquid_magma_totem") : EmptyAction.Action,
 
-                talents[5] == '3' ? "icefury" : "",
+                talents[5] == '3' ? new SimpleAction("icefury") : EmptyAction.Action,
 
-                talents[6] == '2' ? "stormkeeper" : "",
-                talents[6] == '3' ? "ascendance" : ""
+                talents[6] == '2' ? new SimpleAction("stormkeeper") : EmptyAction.Action,
+                talents[6] == '3' ? new SimpleAction("ascendance") : EmptyAction.Action
             };
 
-            actions.AddRange(activeTalents.Where(x => !string.IsNullOrEmpty(x)).ToList());
+            actions.AddRange(activeTalents.Where(x => !(x is EmptyAction)).ToList());
 
-            options = new List<IOption>();
+            conditions = new List<ICondition>();
             switch (talents[0])
             {
                 case '1':
                     {
-                        options.Add(new BuffOption("earthen_rage"));
+                        conditions.Add(new BuffCondition("earthen_rage"));
                     }
                     break;
                 case '2':
@@ -65,7 +66,7 @@ namespace simcga
                     break;
                 case '2':
                     {
-                        options.Add(new BuffOption("echoing_shock"));
+                        conditions.Add(new BuffCondition("echoing_shock"));
                     }
                     break;
                 case '3':
@@ -75,14 +76,14 @@ namespace simcga
             {
                 case '1':
                     {
-                        options.Add(new BuffOption("master_of_the_elements"));
+                        conditions.Add(new BuffCondition("master_of_the_elements"));
                     }
                     break;
                 case '2':
                     {
-                        options.Add(new PetOption("pet.storm_elemental.active"));
-                        options.AddRange(Enumerable.Range(0, 21).Select(x => new StackBuffOption("wind_gust", 1, x)).OfType<IOption>());
-                        options.AddRange(Enumerable.Range(0, 21).Select(x => new StackBuffOption("wind_gust", -1, x)).OfType<IOption>());
+                        conditions.Add(new PetCondition("pet.storm_elemental.active"));
+                        conditions.AddRange(Enumerable.Range(0, 21).Select(x => new StackBuffCondition("wind_gust", 1, x)).OfType<ICondition>());
+                        conditions.AddRange(Enumerable.Range(0, 21).Select(x => new StackBuffCondition("wind_gust", -1, x)).OfType<ICondition>());
                     }
                     break;
                 case '3':
@@ -92,15 +93,15 @@ namespace simcga
             {
                 case '1':
                     {
-                        options.Add(new BuffOption("surge_of_power"));
+                        conditions.Add(new BuffCondition("surge_of_power"));
                     }
                     break;
                 case '2':
                     break;
                 case '3':
                     {
-                        options.AddRange(Enumerable.Range(0, 3).Select(x => new StackBuffOption("icefury", 1, x)).OfType<IOption>());
-                        options.AddRange(Enumerable.Range(1, 5).Select(x => new StackBuffOption("icefury", -1, x)).OfType<IOption>());
+                        conditions.AddRange(Enumerable.Range(0, 3).Select(x => new StackBuffCondition("icefury", 1, x)).OfType<ICondition>());
+                        conditions.AddRange(Enumerable.Range(1, 5).Select(x => new StackBuffCondition("icefury", -1, x)).OfType<ICondition>());
                     }
                     break;
             }
@@ -110,19 +111,19 @@ namespace simcga
                     break;
                 case '2':
                     {
-                        options.AddRange(Enumerable.Range(0,2).Select(x => new StackBuffOption("stormkeeper", 1, x)).OfType<IOption>());
-                        options.AddRange(Enumerable.Range(1,4).Select(x => new StackBuffOption("stormkeeper", -1, x)).OfType<IOption>());
+                        conditions.AddRange(Enumerable.Range(0,2).Select(x => new StackBuffCondition("stormkeeper", 1, x)).OfType<ICondition>());
+                        conditions.AddRange(Enumerable.Range(1,4).Select(x => new StackBuffCondition("stormkeeper", -1, x)).OfType<ICondition>());
                     }
                     break;
                 case '3':
                     {
-                        options.Add(new BuffOption("ascendance"));
+                        conditions.Add(new BuffCondition("ascendance"));
                     }
                     break;
             }
 
-            options.AddRange(Enumerable.Range(1, 10).Select(x => new ResourceOption("maelstrom", 1, x * 10)).OfType<IOption>());
-            options.AddRange(Enumerable.Range(1, 10).Select(x => new ResourceOption("maelstrom", -1, x * 10)).OfType<IOption>());
+            conditions.AddRange(Enumerable.Range(1, 10).Select(x => new ResourceOption("maelstrom", 1, x * 10)).OfType<ICondition>());
+            conditions.AddRange(Enumerable.Range(1, 10).Select(x => new ResourceOption("maelstrom", -1, x * 10)).OfType<ICondition>());
         }
     }
 }

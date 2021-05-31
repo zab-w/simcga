@@ -18,7 +18,7 @@ namespace GeneticLibrary
 
         IList<IndividualType> CrossOver(IList<IndividualType> parents);
 
-        IndividualType Mutate(IndividualType item);
+        IList<IndividualType> Mutate(IndividualType item);
 
         bool Fitness(IList<IndividualType> population, IDictionary<IndividualType, MeasureType> results, IList<bool> toDelete);
 
@@ -79,7 +79,7 @@ namespace GeneticLibrary
                 int k = rnd.Next(100);
                 if (k <= options.MutateChance)
                 {
-                    sons.Add(this.geneticOperations.Mutate(person));
+                    sons.AddRange(this.geneticOperations.Mutate(person));
                 }
             }
 

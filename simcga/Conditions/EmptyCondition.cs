@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace simcga.Options
 {
-    class EmptyOption : IOption
+    class EmptyCondition : ICondition
     {
-        public static IOption Option = new EmptyOption();
+        public static ICondition Condition = new EmptyCondition();
 
-        public IOption Mutate()
+        public ICondition Mutate()
         {
-            return Option;
+            return Condition;
         }
     }
 }

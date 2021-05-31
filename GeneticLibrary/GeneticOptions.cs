@@ -11,14 +11,14 @@ namespace GeneticLibrary
     {
         public int DescendantChance { get; set; } = 0;
         
-        public int MutateChance { get; set; } = 10;
+        public int MutateChance { get; set; } = 33;
 
         public int ParentCountForNew { get; set; } = 10;
 
-        public int MaxPopulateCount { get; set; } = 100;
+        public int MaxPopulateCount { get; set; } = 6;
 
         public int MinPersonToStop { get; set; } = 3;
 
-        public int MinPopulateCount { get; set; } = 10;
+        public int MinPopulateCount { get; set; } = 20;
     }
 }

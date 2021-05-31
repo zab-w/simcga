@@ -4,16 +4,16 @@ using UtilsLib;
 
 namespace simcga
 {
-    public abstract class BaseOption : IOption, IEquatable<BaseOption>
+    public abstract class BaseCondition : ICondition, IEquatable<BaseCondition>
     {
         protected string _negate = string.Empty;
 
         public override bool Equals(object obj)
         {
-            return this.Equals(obj as BaseOption);
+            return this.Equals(obj as BaseCondition);
         }
 
-        public bool Equals(BaseOption other)
+        public bool Equals(BaseCondition other)
         {
             return other != null &&
                    this._negate == other._negate;
@@ -24,7 +24,7 @@ namespace simcga
             return HashCode.Combine(this._negate);
         }
 
-        public IOption Mutate()
+        public ICondition Mutate()
         {
             var ret = this.MutateImpl();
             int rand = StaticRandom.Random.Next(2);
@@ -43,14 +43,14 @@ namespace simcga
             return ret;
         }
 
-        protected abstract BaseOption MutateImpl();
+        protected abstract BaseCondition MutateImpl();
 
-        public static bool operator ==(BaseOption left, BaseOption right)
+        public static bool operator ==(BaseCondition left, BaseCondition right)
         {
-            return EqualityComparer<BaseOption>.Default.Equals(left, right);
+            return EqualityComparer<BaseCondition>.Default.Equals(left, right);
         }
 
-        public static bool operator !=(BaseOption left, BaseOption right)
+        public static bool operator !=(BaseCondition left, BaseCondition right)
         {
             return !(left == right);
         }

@@ -4,7 +4,7 @@ using UtilsLib;
 
 namespace simcga
 {
-    public class ResourceOption : BaseOption, IEquatable<ResourceOption>
+    public class ResourceOption : BaseCondition, IEquatable<ResourceOption>
     {
         private readonly string _resourceName;
         private readonly int _moreEqualLess;
@@ -51,7 +51,7 @@ namespace simcga
             return $"{_negate}{_resourceName}{compare}{_value}";
         }
 
-        protected override BaseOption MutateImpl()
+        protected override BaseCondition MutateImpl()
         {
             var value = _value;
             int moreEqualLess = _moreEqualLess;

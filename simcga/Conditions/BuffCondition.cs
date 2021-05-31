@@ -3,12 +3,12 @@ using System.Collections.Generic;
 
 namespace simcga
 {
-    public class BuffOption : BaseOption, IEquatable<BuffOption>
+    public class BuffCondition : BaseCondition, IEquatable<BuffCondition>
     {
         private readonly string _buffName;
         private readonly string _state;
 
-        public BuffOption(string buffName, string state = "up")
+        public BuffCondition(string buffName, string state = "up")
         {
             this._buffName = buffName;
             this._state = state;
@@ -16,10 +16,10 @@ namespace simcga
 
         public override bool Equals(object obj)
         {
-            return this.Equals(obj as BuffOption);
+            return this.Equals(obj as BuffCondition);
         }
 
-        public bool Equals(BuffOption other)
+        public bool Equals(BuffCondition other)
         {
             return other != null &&
                    base.Equals(other) &&
@@ -37,7 +37,7 @@ namespace simcga
             return $"{_negate}buff.{_buffName}.{_state}";
         }
 
-        protected override BaseOption MutateImpl()
+        protected override BaseCondition MutateImpl()
         {
             var newState = "down";
             if(_state == "down")
@@ -45,15 +45,15 @@ namespace simcga
                 newState = "up";
             }
 
-            return new BuffOption(_buffName, newState);
+            return new BuffCondition(_buffName, newState);
         }
 
-        public static bool operator ==(BuffOption left, BuffOption right)
+        public static bool operator ==(BuffCondition left, BuffCondition right)
         {
-            return EqualityComparer<BuffOption>.Default.Equals(left, right);
+            return EqualityComparer<BuffCondition>.Default.Equals(left, right);
         }
 
-        public static bool operator !=(BuffOption left, BuffOption right)
+        public static bool operator !=(BuffCondition left, BuffCondition right)
         {
             return !(left == right);
         }

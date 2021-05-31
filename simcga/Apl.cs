@@ -1,4 +1,5 @@
-﻿using simcga.Options;
+﻿using simcga.Actions;
+using simcga.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,9 +8,9 @@ namespace simcga
 {
     public class AplAction : IEquatable<AplAction>
     {
-        public string ActionName { get; set; }
+        public IAction ActionName { get; set; }
 
-        public IOption Options { get; set; }
+        public ICondition Options { get; set; }
 
         public AplAction Clone()
         {
@@ -88,8 +89,6 @@ namespace simcga
 
         internal IEnumerable<string> GetContent()
         {
-            bool first = true;
-
             var precombat = new string[]
             {
                 "actions.precombat=\"flask\"",
@@ -110,18 +109,13 @@ namespace simcga
                 yield return pre;
             }
 
-            foreach(var act in Actions)
+            yield return "actions=/potion";
+            yield return "actions+=/use_items";
+
+            foreach (var act in Actions)
             {
-                var temp = !(act.Options is EmptyOption) ? string.Join(",", act.ActionName, $"if={act.Options}") : act.ActionName;
-                if (first)
-                {
-                    yield return "actions=" + temp;
-                    first = false;
-                }
-                else
-                {
-                    yield return "actions+=/" + temp;
-                }                 
+                var temp = !(act.Options is EmptyCondition) ? string.Join(",", act.ActionName, $"if={act.Options}") : act.ActionName.ToString();
+                yield return "actions+=/" + temp;
             }
         }
 
