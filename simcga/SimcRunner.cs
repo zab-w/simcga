@@ -23,20 +23,7 @@ namespace simcga
             this._simcPath = simcPath;
             this._apiKeyPath = apiKeyPath;
         }
-        public IDictionary<Apl, Dps> Measure(in IList<Apl> items)
-        {
-            IDictionary<Apl, Dps> ret = new Dictionary<Apl, Dps>();
-            foreach (var batch in Batch(items, 10))
-            {
-                var batchRet = this.MeasureCore(batch);
-                foreach (var t in batchRet)
-                {
-                    ret.Add(t.Key, t.Value);
-                }
-            }
 
-            return ret;
-        }
         private static IEnumerable<IList<TSource>> Batch<TSource>(
                   IEnumerable<TSource> source, int size)
         {

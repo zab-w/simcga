@@ -111,6 +111,11 @@ namespace simcga
 
             yield return "actions=/potion";
             yield return "actions+=/use_items";
+            yield return "actions+=/blood_fury";
+            yield return "actions+=/berserking";
+            yield return "actions+=/fireblood";
+            yield return "actions+=/ancestral_call";
+            yield return "actions+=/bag_of_tricks";
 
             foreach (var act in Actions)
             {
